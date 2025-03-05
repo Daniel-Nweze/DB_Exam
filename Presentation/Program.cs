@@ -18,7 +18,7 @@ serviceCollection.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer("Data Source=localhost;Initial Catalog=dbExam;Integrated Security=True;Pooling=False;Encrypt=True;Trust Server Certificate=True"));
 
 // Registrering av repositories och service med Dependecy Injection
-serviceCollection.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+serviceCollection.AddScoped(typeof(IBaseRepository<>), typeof(BaseRepository<>));
 serviceCollection.AddScoped<IProjectService, ProjectService>();
 // serviceCollection.AddScoped<IEmployeeService, EmployeeService>(); // används inte
 serviceCollection.AddScoped<ICustomerService, CustomerService>();

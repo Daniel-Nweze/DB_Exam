@@ -28,7 +28,7 @@ namespace TestProject.Repositories
         {
             // Arrange 
             using var context = GetInMemoryDbContext();
-            var repository = new Repository<Project>(context);
+            var repository = new BaseRepository<Project>(context);
             var project = new Project
             {
                 ProjectName = "Test projekt",
@@ -55,7 +55,7 @@ namespace TestProject.Repositories
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var repository = new Repository<Project>(context);
+            var repository = new BaseRepository<Project>(context);
 
             var project = new Project
             {
@@ -83,7 +83,7 @@ namespace TestProject.Repositories
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var repository = new Repository<Project>(context);
+            var repository = new BaseRepository<Project>(context);
 
             var project1 = new Project
             {
@@ -124,7 +124,7 @@ namespace TestProject.Repositories
         {
             // Arrange 
             using var context = GetInMemoryDbContext();
-            var repository = new Repository<Project>(context);
+            var repository = new BaseRepository<Project>(context);
 
             var project = new Project
             {
@@ -158,7 +158,7 @@ namespace TestProject.Repositories
         {
             // Arrange
             using var context = GetInMemoryDbContext();
-            var repository = new Repository<Project>(context);
+            var repository = new BaseRepository<Project>(context);
 
             var project = new Project
             {

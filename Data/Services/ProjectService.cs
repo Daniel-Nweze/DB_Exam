@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data.Services
 {
-    public class ProjectService(IRepository<Project> projectRepository) : IProjectService
+    public class ProjectService(IBaseRepository<Project> projectRepository) : IProjectService
     {
-        private readonly IRepository<Project> _projectRepository = projectRepository;
+        private readonly IBaseRepository<Project> _projectRepository = projectRepository;
 
         public async Task CreateProjectAsync(Project project)
         {

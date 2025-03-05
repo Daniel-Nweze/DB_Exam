@@ -4,9 +4,9 @@ using Data.Repositories;
 
 namespace Data.Services
 {
-    public class CustomerService(IRepository<Customer> customerRepository) : ICustomerService
+    public class CustomerService(IBaseRepository<Customer> customerRepository) : ICustomerService
     {
-        private readonly IRepository<Customer> _customerRepository = customerRepository;
+        private readonly IBaseRepository<Customer> _customerRepository = customerRepository;
 
         public async Task<IEnumerable<Customer>> GetAllCustomersAsync()
         {

@@ -4,9 +4,9 @@ using Data.Repositories;
 
 namespace Data.Services
 {
-    public class ProjectManagerService(IRepository<ProjectManager> projectManagerRepository) : IProjectManagerService
+    public class ProjectManagerService(IBaseRepository<ProjectManager> projectManagerRepository) : IProjectManagerService
     {
-        private readonly IRepository<ProjectManager> _projectManagerRepository = projectManagerRepository;
+        private readonly IBaseRepository<ProjectManager> _projectManagerRepository = projectManagerRepository;
 
         public async Task<IEnumerable<ProjectManager>> GetAllProjectManagersAsync()
         {

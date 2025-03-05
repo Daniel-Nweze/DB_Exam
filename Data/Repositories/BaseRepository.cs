@@ -9,12 +9,12 @@ namespace Data.Repositories
     * Jag har använt Chatgpt för att strukturera koden korrekt 
     * och jag förstår hur allting fungerar.
     */
-    public class Repository<T> : IRepository<T> where T : class
+    public class BaseRepository<T> : IBaseRepository<T> where T : class
     {
         protected readonly AppDbContext _context;
         protected readonly DbSet<T> _dbSet;
 
-        public Repository(AppDbContext context)
+        public BaseRepository(AppDbContext context)
         {
             _context = context;
             _dbSet = _context.Set<T>();
