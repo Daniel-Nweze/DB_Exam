@@ -1,6 +1,6 @@
 ﻿namespace Data.Entities
 {
-    // Kopplingstabell mellan Project och Employee (många-till-många).
+   
 
     public class ProjectEmployee
     {

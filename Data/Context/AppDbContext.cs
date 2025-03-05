@@ -34,10 +34,32 @@ namespace Data.Context
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Customer>()
+                  .HasMany(c => c.Projects)
+                  .WithOne(p => p.Customer)
+                  .HasForeignKey(p => p.CustomerId);
+
+            modelBuilder.Entity<Project>()
+                  .HasOne(p => p.ProjectManager)
+                  .WithMany(pm => pm.Projects)
+                  .HasForeignKey(p => p.ProjectManagerId);
+
+
+            modelBuilder.Entity<Project>()
+                  .HasOne(p => p.Service)
+                  .WithMany(s => s.Projects)
+                  .HasForeignKey(p => p.ServiceId);
+
             // Konvertera ProjectStatus från enum till string så att strängen visas i SSMS - Chatgpt genererad
+
             modelBuilder.Entity<Project>()
                 .Property(p => p.Status)
                 .HasConversion<string>();
+
+            // Projektansvariga kan inte ha samma e-post.. varje e-post är unik.
+            modelBuilder.Entity<ProjectManager>()
+                .HasIndex(pm => pm.Email)
+                .IsUnique();
 
             // Kopplade primära nycklar för en många-till-många relation.. en anställd kan vara kopplad till flera projekt och vice versa - Chatgpt genererad
             modelBuilder.Entity<ProjectEmployee>()
@@ -48,11 +70,6 @@ namespace Data.Context
                 .HasOne(e => e.Department)
                 .WithMany(d => d.Employees)
                 .HasForeignKey(e => e.DepartmentId);
-
-            // Projektansvariga kan inte ha samma e-post.. varje e-post är unik.
-            modelBuilder.Entity<ProjectManager>()
-                .HasIndex(pm => pm.Email)
-                .IsUnique();
 
         }
     }

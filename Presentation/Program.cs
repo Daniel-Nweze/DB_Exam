@@ -7,6 +7,7 @@ using Data.Repositories;
 using Data.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 
 // Dependency injection och databaskontext
@@ -62,7 +63,7 @@ async Task RunApplicationAsync(IProjectService projectService,
                     await CreateProject(projectService, customerService, projectManagerService, serviceService);
                     break;
                 case 3:
-                    await EditProject(projectService);
+                    await EditProject(projectService, customerService, projectManagerService, serviceService);
                     break;
                 case 4:
                     await DeleteProject(projectService);
@@ -107,14 +108,11 @@ async Task CreateProject(IProjectService projectService,
 
         decimal totalPrice = GetValidPrice("Ange totalpris: ");
 
-        var customer = GetValidCustomer();
-        await customerService.CreateCustomerAsync(customer);
+        var customer = await ChooseOrCreateCustomer(customerService);
+        var projectManager = await ChooseOrCreateProjectManager(projectManagerService);
+        var service = await ChooseOrCreateService(serviceService);
 
-        var projectManager = GetValidProjectManager();
-        await projectManagerService.CreateProjectManagerAsync(projectManager);
-
-        var service = GetValidService();
-        await serviceService.CreateServiceAsync(service);
+   
 
         ProjectStatus status = GetValidProjectStatus("Ange projektstatus (EjPåbörjad, Pågående, Avslutad): ");
 
@@ -133,8 +131,10 @@ async Task CreateProject(IProjectService projectService,
 
 }
 
+
+
 // Detaljvy för projekt och redigering
-async Task ShowAndEditProjectDetails(IProjectService projectService, Project project)
+async Task ShowAndEditProjectDetails(IProjectService projectService, ICustomerService customerService, IProjectManagerService projectManagerService, IServiceService serviceService, Project project)
 {
     bool editing = true;
     while (editing)
@@ -169,13 +169,13 @@ async Task ShowAndEditProjectDetails(IProjectService projectService, Project pro
                 project.Status = GetValidProjectStatus("Ange ny status (EjPåbörjad, Pågående, Avslutad): ");
                 break;
             case "6":
-                project.ProjectManager = GetValidProjectManager();
+                project.ProjectManager = await ChooseOrCreateProjectManager(projectManagerService);
                 break;
             case "7":
-                project.Customer = GetValidCustomer();
+                project.Customer = await ChooseOrCreateCustomer(customerService);
                 break;
             case "8":
-                project.Service = GetValidService();
+                project.Service = await ChooseOrCreateService(serviceService);
                 break;
             case "s":
                 await projectService.UpdateProjectAsync(project);
@@ -189,7 +189,7 @@ async Task ShowAndEditProjectDetails(IProjectService projectService, Project pro
                 editing = false;
                 break;
             default:
-                ShowError("Ogiltigt val, försök igen.");              
+                ShowError("Ogiltigt val, försök igen.");
                 break;
         }
     }
@@ -211,7 +211,7 @@ async Task ListProjects(IProjectService projectService)
             return;
         }
 
-        await EditProject(projectService);
+        await EditProject(projectService, customerService, projectManagerService, serviceService);
     }
     catch (Exception ex)
     {
@@ -220,7 +220,7 @@ async Task ListProjects(IProjectService projectService)
 }
 
 // Redigera projekt
-async Task EditProject(IProjectService projectService)
+async Task EditProject(IProjectService projectService, ICustomerService customerService, IProjectManagerService projectManagerService, IServiceService serviceService)
 {
     try
     {
@@ -264,14 +264,16 @@ async Task EditProject(IProjectService projectService)
         }
 
         var selectedProject = await projectService.GetProjectByIdAsync(projectId);
-        if(selectedProject == null)
+        if (selectedProject == null)
         {
             ShowError($"Projekt med ID {projectId} hittades inte.");
             Console.WriteLine("Tryck på valfri tangent för att återgå... ");
+            Console.ReadKey();
             return;
         }
 
-        await ShowAndEditProjectDetails(projectService, selectedProject);
+        await ShowAndEditProjectDetails(projectService, customerService, projectManagerService, serviceService, selectedProject);
+
 
     }
     catch (Exception ex)
@@ -313,7 +315,7 @@ async Task DeleteProject(IProjectService projectService)
                 ShowError($"Projekt med nummer {projectId} hittades inte.");
                 return;
             }
-            Console.WriteLine($"Är du säker på att du vill radera projekt '{project.ProjectName}'? (J/N)");
+            Console.WriteLine($"Är du säker på att du vill radera projekt '{project?.ProjectName}'? (J/N)");
             if (Console.ReadLine()?.Trim().ToLower() == "j")
             {
                 await projectService.DeleteProjectAsync(projectId);
@@ -329,13 +331,110 @@ async Task DeleteProject(IProjectService projectService)
             ShowError("Felaktigt id, försök igen.");
         }
     } while (string.IsNullOrEmpty(input) || !int.TryParse(input, out projectId));
-    
+
     Console.ReadKey();
 }
 
 /* Validerings- och felmeddelande metoder samt en meny metod för att göra huvudkoden mer robust.
  Tagit hjälp av Chatgpt för att få fram vilka metoder som är logiska att använda.
 */
+
+async Task<Customer> ChooseOrCreateCustomer(ICustomerService customerService)
+{
+    Console.WriteLine("Vill du använda en befintlig kund? (J/N)");
+    if (Console.ReadLine()?.Trim().ToLower() == "j")
+    {
+        var customers = await customerService.GetAllCustomersAsync();
+        if (!customers.Any())
+        {
+            Console.WriteLine("Inga kunder hittades. Skapa ny kund");
+            return GetValidCustomer();
+        }
+
+        Console.WriteLine("\nVälj en befintlig kund: ");
+        foreach (var customer in customers)
+        {
+            Console.WriteLine($"ID: {customer.CustomerId} | Namn: {customer.Name}");
+        }
+
+        Console.Write("\nAnge kundens ID: ");
+        if (int.TryParse(Console.ReadLine(), out int customerId))
+        {
+            var existingCustomer = await customerService.GetCustomerByIdAsync(customerId);
+            if (existingCustomer != null)
+            {
+                return existingCustomer;
+            }
+            ShowError("Felaktigt ID. Ny kund skapas.");
+        }
+    }
+
+    return GetValidCustomer();
+}
+async Task<ProjectManager> ChooseOrCreateProjectManager(IProjectManagerService projectManagerService)
+{
+    Console.WriteLine("Vill du använda en befintlig projektansvarig? (J/N)");
+    if (Console.ReadLine()?.Trim().ToLower() == "j")
+    {
+        var projectManagers = await projectManagerService.GetAllProjectManagersAsync();
+        if (!projectManagers.Any())
+        {
+            Console.WriteLine("Inga projektansvariga finns. Skapa ny projektansvarig.");
+            return GetValidProjectManager();
+        }
+
+        Console.WriteLine("\nVälj en befintlig projektansvarig:");
+        foreach (var manager in projectManagers)
+        {
+            Console.WriteLine($"ID: {manager.ProjectManagerId} | Namn: {manager.FullName}");
+        }
+
+        Console.Write("\nAnge projektansvarigs ID: ");
+        if (int.TryParse(Console.ReadLine(), out int managerId))
+        {
+            var existingManager = await projectManagerService.GetProjectManagerByIdAsync(managerId);
+            if (existingManager != null)
+            {
+                return existingManager;
+            }
+            ShowError("Felaktigt ID. Ny projektansvarig skapas.");
+        }
+    }
+    return GetValidProjectManager();
+}
+async Task<Service> ChooseOrCreateService(IServiceService serviceService)
+{
+    Console.WriteLine("Vill du använda en befintlig tjänst? (J/N)");
+    if(Console.ReadLine()?.Trim().ToLower() == "j")
+    {
+        var services = await serviceService.GetAllServicesAsync();
+        if (!services.Any())
+        {
+            Console.WriteLine("Inga tjänster finns. Skapa ny tjänst.");
+            return GetValidService();
+        }
+
+        Console.WriteLine("\nVälj en befintlig tjänst:");
+        foreach(var service in services)
+        {
+            Console.WriteLine($"ID: {service.ServiceId} | {service.Description}");
+        }
+
+        Console.WriteLine("\nAnge tjänstens ID: ");
+        if(int.TryParse(Console.ReadLine(), out int serviceId))
+        {
+            var existingService = await serviceService.GetServiceByIdAsync(serviceId);
+            if(existingService != null)
+            {
+                return existingService;
+            }
+            ShowError("Felaktigt ID. Ny tjänst skapas.");
+
+        }
+    }
+    return GetValidService();
+}
+
 string GetValidInput(string prompt)
 {
     string input;
