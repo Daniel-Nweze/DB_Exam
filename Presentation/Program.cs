@@ -112,7 +112,7 @@ async Task CreateProject(IProjectService projectService,
         var projectManager = await ChooseOrCreateProjectManager(projectManagerService);
         var service = await ChooseOrCreateService(serviceService);
 
-   
+
 
         ProjectStatus status = GetValidProjectStatus("Ange projektstatus (EjPåbörjad, Pågående, Avslutad): ");
 
@@ -272,6 +272,10 @@ async Task EditProject(IProjectService projectService, ICustomerService customer
             return;
         }
 
+        selectedProject.Customer = (await customerService.GetCustomerByIdAsync(selectedProject.CustomerId))!;
+        selectedProject.ProjectManager = (await projectManagerService.GetProjectManagerByIdAsync(selectedProject.ProjectManagerId))!;
+        selectedProject.Service = (await serviceService.GetServiceByIdAsync(selectedProject.ServiceId))!;
+
         await ShowAndEditProjectDetails(projectService, customerService, projectManagerService, serviceService, selectedProject);
 
 
@@ -405,7 +409,7 @@ async Task<ProjectManager> ChooseOrCreateProjectManager(IProjectManagerService p
 async Task<Service> ChooseOrCreateService(IServiceService serviceService)
 {
     Console.WriteLine("Vill du använda en befintlig tjänst? (J/N)");
-    if(Console.ReadLine()?.Trim().ToLower() == "j")
+    if (Console.ReadLine()?.Trim().ToLower() == "j")
     {
         var services = await serviceService.GetAllServicesAsync();
         if (!services.Any())
@@ -415,16 +419,16 @@ async Task<Service> ChooseOrCreateService(IServiceService serviceService)
         }
 
         Console.WriteLine("\nVälj en befintlig tjänst:");
-        foreach(var service in services)
+        foreach (var service in services)
         {
             Console.WriteLine($"ID: {service.ServiceId} | {service.Description}");
         }
 
         Console.WriteLine("\nAnge tjänstens ID: ");
-        if(int.TryParse(Console.ReadLine(), out int serviceId))
+        if (int.TryParse(Console.ReadLine(), out int serviceId))
         {
             var existingService = await serviceService.GetServiceByIdAsync(serviceId);
-            if(existingService != null)
+            if (existingService != null)
             {
                 return existingService;
             }
