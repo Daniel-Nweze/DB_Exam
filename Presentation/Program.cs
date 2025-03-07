@@ -272,7 +272,8 @@ async Task EditProject(IProjectService projectService, ICustomerService customer
             return;
         }
 
-        selectedProject.Customer = (await customerService.GetCustomerByIdAsync(selectedProject.CustomerId))!;
+        // Hämtar kund, projektansvarigs- och tjänstinformation baserat på respektives ID. Nulloperatorn '!' för att appen kräver att dessa värden anges. 
+        selectedProject.Customer = (await customerService.GetCustomerByIdAsync(selectedProject.CustomerId))!; 
         selectedProject.ProjectManager = (await projectManagerService.GetProjectManagerByIdAsync(selectedProject.ProjectManagerId))!;
         selectedProject.Service = (await serviceService.GetServiceByIdAsync(selectedProject.ServiceId))!;
 
